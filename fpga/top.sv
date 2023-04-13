@@ -1,12 +1,17 @@
 `default_nettype none
 
 module top (
+    // vga
     output var hsync,
     output var vsync,
     output var [2:0] red,
     output var [2:0] green,
     output var [2:0] blue,
-    output var [3:0] io
+    // spi
+    // output var f_sclk,
+    output var f_cs,
+    output var f_mosi,
+    input var f_miso
 );
     wire osc_clk;  // goal: 50.35 MHz
     OSCG #(.DIV(2)) OSCinst0 (.OSC(osc_clk));
@@ -48,6 +53,12 @@ module top (
         .RST(1'b0),
         .STDBY(1'b0),
         .LOCK(lock[1])
+    );
+
+    logic f_sclk;
+    USRMCLK spi_clk (
+        .USRMCLKI(f_sclk),
+        .USRMCLKTS(1)
     );
 
     wire n_rst;
