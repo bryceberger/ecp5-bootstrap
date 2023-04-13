@@ -8,9 +8,7 @@ SYSCONFIG CONFIG_IOVOLTAGE=3.3 COMPRESS_CONFIG=ON MASTER_SPI_PORT=DISABLE SLAVE_
 # LOCATE COMP "out[2]" SITE "E7";
 # LOCATE COMP "out[3]" SITE "A3";
 
-# can't use N9, have to use USRMCLK
-# LOCATE COMP "f_sclk" SITE "N9";
-# LOCATE COMP "f_sclk" SITE "T6"; # for debugging
+# can't use N9, have to use USRMCLK for clk
 LOCATE COMP "f_cs" SITE "N8";
 LOCATE COMP "f_mosi" SITE "T8";
 LOCATE COMP "f_miso" SITE "T7";

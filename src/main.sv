@@ -14,12 +14,12 @@ module main (
     output var f_sclk,
     output var f_cs,
     output var f_mosi,
-    input var f_miso
+    input var f_miso,
+    output var f_done
 );
     logic load;
-    logic [2:0] addr;
+    logic [7:0] addr;
     logic [7:0] data;
-    assign addr = 'o3;
     vga_driver vga_driver (.*);
 
     spi spi (.*);
@@ -37,7 +37,7 @@ module vga_driver (
     output var [2:0] blue,
     // input data
     input var load,
-    input var [2:0] addr,
+    input var [7:0] addr,
     input var [7:0] data
 );
     logic [7:0] color;

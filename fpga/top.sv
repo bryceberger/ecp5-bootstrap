@@ -56,9 +56,10 @@ module top (
     );
 
     logic f_sclk;
+    logic f_done;
     USRMCLK spi_clk (
         .USRMCLKI(f_sclk),
-        .USRMCLKTS(1)
+        .USRMCLKTS(f_done)
     );
 
     wire n_rst;
