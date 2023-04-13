@@ -29,14 +29,17 @@ module vga (
     always_ff @(posedge clk)
         if (end_of_pixel)
             pixel_count <= pixel_count == 799 ? 0 : pixel_count + 1;
+        else pixel_count <= pixel_count;
 
     wire end_of_frame;
     assign end_of_frame = line_count == 524 && end_of_line;
     always_ff @(posedge clk)
-        if (end_of_line)
-            line_count <= line_count == 524 ? 0 : line_count + 1;
+        if (end_of_line) line_count <= line_count == 524 ? 0 : line_count + 1;
+        else line_count <= line_count;
 
-    always_ff @(posedge clk) if (end_of_frame) frame_count <= frame_count + 1;
+    always_ff @(posedge clk)
+        if (end_of_frame) frame_count <= frame_count + 1;
+        else frame_count <= frame_count;
 
     assign row = line_count;
     assign col = pixel_count;

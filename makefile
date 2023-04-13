@@ -1,3 +1,5 @@
+SHELL=/usr/bin/env bash -O globstar -O nullglob -c
+
 .PHONY: clean
 
 cram: build/build.bit
@@ -13,8 +15,8 @@ build/build.svf build/build.config: build build/build.json
 		--json build/build.json --textcfg build/build.config --lpf fpga/pinmap.lpf \
 		--lpf-allow-unconstrained
 
-build/build.json: build src/**.sv
-	yosys -p "synth_ecp5 -top top -json build/build.json" src/**.sv
+build/build.json: build src/**/*.sv src/**/*.hex fpga/*.sv
+	yosys -p "synth_ecp5 -top top -json build/build.json" **/*.sv
 
 build:
 	mkdir build
