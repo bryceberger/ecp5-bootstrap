@@ -1,4 +1,4 @@
-SHELL=/usr/bin/env bash -O globstar -O nullglob -c
+# SHELL=/usr/bin/env bash
 
 source := $(shell find -name '*.sv')
 hex := $(shell find -name '*.hex')
@@ -16,12 +16,12 @@ build/build.svf build/build.config: build/build.json $(pinmap)
 	nextpnr-ecp5 \
 		--12k --package CABGA256 \
 		--speed 6 --freq 5 \
-		--json build/build.json --textcfg build/build.config --lpf fpga/pinmap.lpf \
-		--lpf-allow-unconstrained
+		--json build/build.json --textcfg build/build.config \
+		--lpf fpga/pinmap.lpf --lpf-allow-unconstrained
 
 build/build.json: $(source) $(hex)
 	mkdir -p build
-	yosys -p "synth_ecp5 -top top -json build/build.json" **/*.sv
+	yosys -p "synth_ecp5 -top top -json build/build.json" $(source)
 
 clean:
 	rm -rf build
