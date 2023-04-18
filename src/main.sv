@@ -1,4 +1,4 @@
-`default_nettype none
+`default_nettype none `timescale 1ns / 1ns
 
 module main (
     input var clk,
@@ -22,7 +22,10 @@ module main (
     logic [7:0] data;
     vga_driver vga_driver (.*);
 
-    spi spi (.*);
+    spi spi (
+        .*,
+        .data_in(data)
+    );
 endmodule
 
 module vga_driver (

@@ -45,3 +45,4 @@ style_keyword_0or1space = true
 style_keyword_construct = true
 style_keyword_end = true
 style_keyword_newline = true
+style_commaleading = true

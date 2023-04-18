@@ -55,7 +55,8 @@ module vga (
     logic [8:0] rgb;
     palette pt (
         .color(color[5:0]),
-        .rgb(rgb)
+        .rgb(rgb),
+        .active(1)
     );
 
     assign {red, green, blue} = in_screen ? rgb : 0;
