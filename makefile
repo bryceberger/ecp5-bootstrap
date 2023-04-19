@@ -12,6 +12,8 @@ pinmap := $(shell find -name '*.lpf')
 nproc := $(shell nproc)
 WAVE = gtkwave --dark
 
+BASE := $(MAKECMDGOALS:%.sim=%)
+
 .PHONY: clean clean_sim clean_cram %.sim cram
 .PRECIOUS: obj_dir/V% obj_dir/%.vcd
 
@@ -29,7 +31,7 @@ build/build.svf build/build.config: build/build.json $(pinmap)
 		--lpf fpga/pinmap.lpf --lpf-allow-unconstrained
 
 build/build.json: $(fpga_source) $(hex) build/v
-	@cp -u $(hex) build/verilog
+	# @cp -u $(hex) build/verilog
 	@yosys -p "synth_ecp5 -top top -json build/build.json" $(v_source) $(fpga_source)
 
 build/v: $(sim_source) $(include_source)
@@ -43,18 +45,18 @@ build/v: $(sim_source) $(include_source)
 		then \
 		echo "gtkwave already running"; \
 		else \
-		$(WAVE) obj_dir/waveform.vcd > /dev/null 2>&1 & \
+		$(WAVE) obj_dir/$(BASE).vcd > /dev/null 2>&1 & \
 		fi
 
 obj_dir/%.vcd: obj_dir/V%
-	@obj_dir/Vspi
-	@mv waveform.vcd obj_dir/$(patsubst %.vcd,%,$(@F)).vcd
+	@obj_dir/V$(BASE)
+	@mv waveform.vcd obj_dir/$(BASE).vcd
 
 obj_dir/V%: tb_%.cpp $(sim_source) $(include_source)
-	@verilator -cc -O3 --trace --trace-fst --top-module $(patsubst V%,%,$(@F)) \
+	@verilator -cc -O3 --trace --trace-fst --top-module $(BASE) \
 		--threads $(nproc) \
 		-I$(include_dir) $(sim_source) --exe $<
-	@make -C obj_dir -f Vspi.mk -s -j $(nproc) Vspi
+	@make -C obj_dir -f V$(BASE).mk -s -j $(nproc) V$(BASE)
 
 clean: clean_cram clean_sim
 
