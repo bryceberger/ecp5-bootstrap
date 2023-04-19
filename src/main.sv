@@ -25,8 +25,6 @@ module main
 
     spi spi
         ( .*
-        , .data_in(data)
-        , .spi_done()
         );
 endmodule
 

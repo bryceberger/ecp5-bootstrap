@@ -3,16 +3,18 @@
 #include <verilated_fst_c.h>
 
 #include <cstdio>
+#include <cstdlib>
 #include <iostream>
 
 #include "Vspi.h"
 #include "Vspi___024root.h"
 
-#define MAX_SIM_TIME (1000)
+#define MAX_SIM_TIME (10000)
 auto sim_time = 0;
 
 void step(Vspi* dut, VerilatedFstC* trace) {
     dut->clk ^= 1;
+    dut->f_miso = rand() & 1;
     dut->eval();
     trace->dump(sim_time);
 }
@@ -38,7 +40,7 @@ int main(int argc, char** argv, char** env) {
     auto done = false;
     while (sim_time++ < max_sim_time) {
         step(dut, m_trace);
-        if (dut->spi_done && !done) {
+        if (dut->f_done && !done) {
             done = true;
             max_sim_time = sim_time + 10;
         }
