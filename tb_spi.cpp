@@ -6,13 +6,13 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "Vspi.h"
-#include "Vspi___024root.h"
+#include "Vspi_test.h"
+#include "Vspi_test___024root.h"
 
 #define MAX_SIM_TIME (10000)
 auto sim_time = 0;
 
-void step(Vspi* dut, VerilatedFstC* trace) {
+void step(Vspi_test* dut, VerilatedFstC* trace) {
     dut->clk ^= 1;
     dut->f_miso = rand() & 1;
     dut->eval();
@@ -20,12 +20,12 @@ void step(Vspi* dut, VerilatedFstC* trace) {
 }
 
 int main(int argc, char** argv, char** env) {
-    auto dut = new Vspi;
+    auto dut = new Vspi_test;
 
     Verilated::traceEverOn(true);
     auto m_trace = new VerilatedFstC;
     dut->trace(m_trace, 5);
-    m_trace->open("waveform.vcd");
+    m_trace->open("spi.vcd");
 
     dut->clk = 1;
     dut->n_rst = 0;

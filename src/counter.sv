@@ -1,5 +1,6 @@
 module counter
     #(int NUM_BITS
+    , bit [NUM_BITS-1:0] ROLLOVER_CORR = 2
     )
     ( input var clk
     , input var n_rst
@@ -29,6 +30,6 @@ module counter
             count <= count;
 
     always_ff @(posedge clk)
-        rollover_flag <= count >= rollover_val - 2;
+        rollover_flag <= count >= rollover_val - ROLLOVER_CORR;
 
 endmodule

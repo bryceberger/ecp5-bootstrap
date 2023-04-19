@@ -2,7 +2,7 @@
 
 `include "spi.vh"
 
-module spi_control
+module spi
     import spi_pkg::cmd_t;
     ( input  var clk
     , input  var n_rst
@@ -73,7 +73,14 @@ module spi_control
     state_t state, state_n, state_r;
     logic transition;
     assign cmd_done = state == NONE;
-    assign f_done = state == END;
+    assign f_done = state == END || state == NONE;
+
+    cmd_t cmd_reg;
+    always_ff @(posedge clk)
+        if (state == NONE)
+            cmd_reg <= cmd;
+        else
+            cmd_reg <= cmd;
 
     wire [15:0] read_status_ext = {F_READ_STATUS, 8'hff};
     wire [31:0] write_ext = {F_WRITE, addr_in};
@@ -94,7 +101,11 @@ module spi_control
             default:          f_mosi = 1;
         endcase
 
-    assign addr_out = {12'h0, (count + 12'h1) >> 3};
+    always_comb
+        case (state)
+            WRITE_DATA: addr_out = {12'h0, (count + 12'h1) >> 3};
+            default: addr_out = 0;
+        endcase
 
     always_ff @(negedge clk, negedge n_rst)
         if (!n_rst) state <= NONE;
@@ -126,7 +137,7 @@ module spi_control
             CHECK_WREN: state_n = WAIT_WREN;
             WAIT_WREN:
             if (status_wren)
-                case (cmd)
+                case (cmd_reg)
                     spi_pkg::WRITE: state_n = SEND_WRITE;
                     spi_pkg::ERASE: state_n = ERASE;
                     default: state_n = NONE;
@@ -199,7 +210,7 @@ module spi_control
         endcase
 endmodule
 
-module spi
+module spi_test
     import spi_pkg::cmd_t;
     // internal communication
     ( input var clk

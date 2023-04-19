@@ -6,48 +6,60 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "Vuart.h"
-#include "Vuart___024root.h"
+#include "Vmain.h"
+#include "Vmain___024root.h"
 
 #define MAX_SIM_TIME (1000)
 auto sim_time = 0;
 
-void step(Vuart* dut, VerilatedFstC* trace) {
+void step_fast(Vmain* dut, VerilatedFstC* trace) {
+    dut->f_miso = rand() & 1;
+
     dut->clk ^= 1;
+    dut->f_sclk ^= 1;
     dut->eval();
     trace->dump(sim_time);
     sim_time++;
 
     dut->clk ^= 1;
+    dut->f_sclk ^= 1;
     dut->eval();
     trace->dump(sim_time);
     sim_time++;
 }
 
-void reset(Vuart* dut, VerilatedFstC* trace) {
+void step(Vmain* dut, VerilatedFstC* trace) {
+    auto delay = 7 + rand() % 4;
+    for (int i = 0; i < delay; i++) {
+        step_fast(dut, trace);
+    }
+
+    delay = 7 + rand() % 4;
+    for (int i = 0; i < delay; i++) {
+        step_fast(dut, trace);
+    }
+}
+
+void reset(Vmain* dut, VerilatedFstC* trace) {
     dut->clk = 1;
+    dut->f_sclk = 1;
     dut->rx = 1;
     dut->n_rst = 0;
-    step(dut, trace);
+    step_fast(dut, trace);
     for (int i = 0; i < 3; i++) {
-        step(dut, trace);
+        step_fast(dut, trace);
     }
     dut->n_rst = 1;
 }
 
-void send_packet(Vuart* dut, VerilatedFstC* trace, char packet) {
-    // step some random amount of time
-    auto delay = 8 + rand() % 8;
+void send_packet(Vmain* dut, VerilatedFstC* trace, char packet) {
+    // step_fast some random amount of time
+    auto delay = 5 + rand() % 20;
     for (auto i = 0; i < delay; i++) {
-        step(dut, trace);
+        step_fast(dut, trace);
     }
 
-    // loop:
-    // - send bit
-    // - wait 8 or 9 cycles (random)
-    dut->packet_start = 1;
     for (auto bit = 0; bit < 11; bit++) {
-        dut->bit_start = 1;
         if (bit == 0) {
             // start bit
             dut->rx = 0;
@@ -61,33 +73,28 @@ void send_packet(Vuart* dut, VerilatedFstC* trace, char packet) {
             dut->rx = (packet >> (bit - 1)) & 1;
         }
 
-        auto delay = 7 + rand() % 4;
-        for (auto i = 0; i < delay; i++) {
-            step(dut, trace);
-            dut->packet_start = 0;
-            dut->bit_start = 0;
-        }
+        step(dut, trace);
     }
 }
 
 int main(int argc, char** argv, char** env) {
-    auto dut = new Vuart;
+    auto dut = new Vmain;
 
     Verilated::traceEverOn(true);
     auto m_trace = new VerilatedFstC;
     dut->trace(m_trace, 5);
-    m_trace->open("uart.vcd");
+    m_trace->open("main.vcd");
 
-    char packets[] = "abcd";
+    // char packets[] = "abcd";
 
     reset(dut, m_trace);
 
-    for (auto packet : packets) {
-        send_packet(dut, m_trace, packet);
+    for (auto i = 0; i < 4096; i++) {
+        send_packet(dut, m_trace, rand());
     }
 
     for (int i = 0; i < 30; i++) {
-        step(dut, m_trace);
+        step_fast(dut, m_trace);
     }
 
     m_trace->close();

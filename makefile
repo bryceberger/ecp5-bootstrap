@@ -50,7 +50,7 @@ build/v: $(sim_source) $(include_source)
 
 obj_dir/%.vcd: obj_dir/V%
 	@obj_dir/V$(BASE)
-	@mv waveform.vcd obj_dir/$(BASE).vcd
+	@mv $(BASE).vcd obj_dir/$(BASE).vcd
 
 obj_dir/V%: tb_%.cpp $(sim_source) $(include_source)
 	@verilator -cc -O3 --trace --trace-fst --top-module $(BASE) \
