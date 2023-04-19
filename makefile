@@ -1,4 +1,4 @@
-tb_source := tb.cpp
+# tb_source := tb.cpp
 sim_source := $(shell find src -name '*.sv')
 fpga_source := $(shell find fpga -name '*.sv')
 v_source = $(shell find -name '*.v')
@@ -12,7 +12,8 @@ pinmap := $(shell find -name '*.lpf')
 nproc := $(shell nproc)
 WAVE = gtkwave --dark
 
-.PHONY: clean clean_sim clean_cram sim cram
+.PHONY: clean clean_sim clean_cram %.sim cram
+.PRECIOUS: obj_dir/V% obj_dir/%.vcd
 
 cram: build/build.bit
 	@openFPGALoader -c jlink-plus build/build.bit
@@ -37,10 +38,7 @@ build/v: $(sim_source) $(include_source)
 	@mv $(patsubst %.sv,%.v,$(sim_source)) build/verilog
 	@touch build/v
 
-simsim: obj_dir/waveform.vcd
-	@$(WAVE) obj_dir/waveform.vcd 2>&1 &
-
-sim: obj_dir/waveform.vcd
+%.sim: obj_dir/%.vcd
 	@if ps -C "gtkwave" > /dev/null; \
 		then \
 		echo "gtkwave already running"; \
@@ -48,15 +46,15 @@ sim: obj_dir/waveform.vcd
 		$(WAVE) obj_dir/waveform.vcd > /dev/null 2>&1 & \
 		fi
 
-obj_dir/waveform.vcd: obj_dir/Vspi
+obj_dir/%.vcd: obj_dir/V%
 	@obj_dir/Vspi
-	@mv waveform.vcd obj_dir
+	@mv waveform.vcd obj_dir/$(patsubst %.vcd,%,$(@F)).vcd
 
-obj_dir/Vspi: $(sim_source) $(tb_source) $(include_source)
-	@verilator -cc -O3 --trace --trace-fst --top-module spi \
+obj_dir/V%: tb_%.cpp $(sim_source) $(include_source)
+	@verilator -cc -O3 --trace --trace-fst --top-module $(patsubst V%,%,$(@F)) \
 		--threads $(nproc) \
-		-I$(include_dir) $(sim_source) --exe $(tb_source)
-	@make -C obj_dir -f Vspi.mk -j $(nproc) Vspi
+		-I$(include_dir) $(sim_source) --exe $<
+	@make -C obj_dir -f Vspi.mk -s -j $(nproc) Vspi
 
 clean: clean_cram clean_sim
 
