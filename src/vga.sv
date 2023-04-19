@@ -1,18 +1,19 @@
 `default_nettype none
 
-module vga (
-    input var clk,
+module vga 
+    ( input var clk
     // to controller
-    input var [7:0] color,
-    output var [9:0] row,
-    output var [9:0] col,
+    , input var [7:0] color
+    , output var [9:0] row
+    , output var [9:0] col
     // to VGA
-    output var vsync,
-    output var hsync,
-    output var [2:0] red,
-    output var [2:0] green,
-    output var [2:0] blue
-);
+    , output var vsync
+    , output var hsync
+    , output var [2:0] red
+    , output var [2:0] green
+    , output var [2:0] blue
+    );
+
     logic [15:0] frame_count = 0;
     logic [9:0] line_count = 0;
     logic [9:0] pixel_count = 0;
@@ -53,11 +54,11 @@ module vga (
     // ---
 
     logic [8:0] rgb;
-    palette pt (
-        .color(color[5:0]),
-        .rgb(rgb),
-        .active(1)
-    );
+    palette pt 
+        ( .color(color[5:0])
+        , .rgb(rgb)
+        , .active(1)
+        );
 
     assign {red, green, blue} = in_screen ? rgb : 0;
 

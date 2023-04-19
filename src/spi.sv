@@ -7,18 +7,18 @@ module spi
     , output var [7:0] data_in
     , output var [7:0] addr
     , output var load
-      // actual pinout
+    // actual pinout
     , output var f_sclk
     , output var f_cs
     , output var f_mosi
     , input var f_miso
-      // disable when done
+    // disable when done
     , output var f_done
+    , output var spi_done
     );
     localparam byte READ = 'h03;
     localparam byte WRITE = 'h02;
     localparam byte WREN = 'h06;
-
     // status register:
     //   0 -> write in progress
     //   1 -> write enable
@@ -26,12 +26,9 @@ module spi
     //   6 -> quad enable
     //   7 -> status register write disable
     localparam byte READ_STATUS = 'h05;
+    localparam byte CHIP_ERASE = 'h60;
 
-    wire [7:0] read_opcode = 'h03;
-    wire [23:0] read_address = 0;
-
-    initial f_sclk = 0;
-    always_ff @(posedge clk) f_sclk <= ~f_sclk;
+    assign f_sclk = clk;
 
     typedef enum logic [5:0]
         { RESET
@@ -42,7 +39,12 @@ module spi
         } state_t;
     state_t state, state_n;
 
-    assign f_done = state == DONE;
+    assign spi_done = state == DONE;
+    always_comb
+        case (state)
+            DONE: f_done = 1;
+            default: f_done = 0;
+        endcase
 
     localparam int COUNT_BITS = 8;
     logic count_en, count_clear, rollover_flag;
@@ -66,13 +68,19 @@ module spi
         bit [63:0] data;
     } inst_t;
 
-    localparam int INST_COUNT = 12;
+    localparam int INST_COUNT = 14;
     inst_t instrs[INST_COUNT], inst;
     logic [$clog2(INST_COUNT):0] inst_count;
 
     assign instrs =
         { '{ cycles: 8
            , data: WREN
+           }
+        , '{ cycles: 8
+           , data: CHIP_ERASE
+           }
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
         , '{ cycles: 16
            , data: {READ_STATUS, 8'hff}

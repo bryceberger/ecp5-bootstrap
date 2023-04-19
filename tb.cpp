@@ -38,7 +38,7 @@ int main(int argc, char** argv, char** env) {
     auto done = false;
     while (sim_time++ < max_sim_time) {
         step(dut, m_trace);
-        if (dut->f_done && !done) {
+        if (dut->spi_done && !done) {
             done = true;
             max_sim_time = sim_time + 10;
         }

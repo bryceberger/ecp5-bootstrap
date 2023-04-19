@@ -1,11 +1,12 @@
-module hex_dec (
-    input var en,
-    input var [7:0] d,
-    input var nibble_sel,
-    input var [2:0] row_sel,
-    input var [2:0] col_sel,
-    output var pixel
-);
+module hex_dec
+    ( input var en
+    , input var [7:0] d
+    , input var nibble_sel
+    , input var [2:0] row_sel
+    , input var [2:0] col_sel
+    , output var pixel
+    );
+
     logic [7:0] character;
     logic [63:0] pixels;
     font ft (.*);
