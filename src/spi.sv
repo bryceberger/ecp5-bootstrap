@@ -74,38 +74,38 @@ module spi
         { '{ cycles: 8
            , data: WREN
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 48
-           , data: {READ, 24'hffffff, 16'hffff}
+        , '{ cycles: 64
+           , data: {READ, 24'h000000, 32'hffffff}
            }
-        , '{ cycles: 48
-           , data: {WRITE, 24'h000000, 16'hdead}
+        , '{ cycles: 64
+           , data: {WRITE, 24'h000000, 32'h8c25de89}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 8
-           , data: READ_STATUS
+        , '{ cycles: 16
+           , data: {READ_STATUS, 8'hff}
            }
-        , '{ cycles: 48
-           , data: {READ, 24'h000000, 16'hffff}
+        , '{ cycles: 64
+           , data: {READ, 24'h000000, 32'hffffff}
            }
         };
     assign inst = instrs[inst_count];
@@ -145,7 +145,7 @@ module spi
 
     always_comb
         case (state)
-            DO_THING: f_mosi = inst.data[inst.cycles - count];
+            DO_THING: f_mosi = inst.data[inst.cycles - count - 1];
             default: f_mosi = 1;
         endcase
 
@@ -169,13 +169,13 @@ module spi
 
             default: begin
                 count_en = 0;
-                rollover_val = 'x;
+                rollover_val = inst.cycles;
             end
         endcase
 endmodule
 
 module counter
-    #( parameter int NUM_BITS
+    #(int NUM_BITS
     )
     ( input var clk
     , input var n_rst
@@ -189,8 +189,8 @@ module counter
     logic [NUM_BITS-1:0] count_n;
 
     always_comb
-        if (count == rollover_val)
-            count_n = 1;
+        if (count >= rollover_val - 1)
+            count_n = 0;
         else if (clear)
             count_n = 0;
         else
@@ -204,10 +204,6 @@ module counter
         else
             count <= count;
 
-    always_ff @(posedge clk)
-        if (en)
-            rollover_flag <= count == rollover_val - 1;
-        else
-            rollover_flag <= rollover_flag;
+    assign rollover_flag = count >= rollover_val - 1;
 
 endmodule
