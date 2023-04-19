@@ -8,12 +8,15 @@ module top
     // uart
     , input  var rx
     , output var tx
+    , output var f_done
     );
 
-    wire osc_clk;  // goal: 50.35 MHz
+    // 155 MHz
+    wire osc_clk;
     OSCG #(.DIV(2)) OSCinst0 (.OSC(osc_clk));
 
     wire [1:0] lock;
+    // filt_clk = 155 / 3 = 51.667 MHz
     wire filt_clk, pll_clk_1;
     EHXPLLL
         #(.CLKI_DIV(1)
@@ -27,6 +30,7 @@ module top
         , .LOCK(lock[0])
         );
 
+    // clk = 51.667 / 52 = 0.994 MHz
     wire pll_clk, clk;
     EHXPLLL
         #(.CLKI_DIV(1)
@@ -41,7 +45,7 @@ module top
         , .LOCK(lock[1])
         );
 
-    logic f_sclk;
+    wire f_sclk = clk;
     logic f_done;
     USRMCLK spi_clk
         ( .USRMCLKI(f_sclk)

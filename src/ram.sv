@@ -12,14 +12,12 @@ module ram
     , output var [DATA_SIZE-1:0] data_out
     );
 
-    logic [DATA_SIZE-1:0] d[2 ** ADDR_SIZE];
+    logic [DATA_SIZE-1:0] mem[2 ** ADDR_SIZE];
 
     always_ff @(posedge clk) begin
-        data_out <= d[r_addr];
+        data_out <= mem[r_addr];
         if (wren)
-            d[w_addr] <= data_in;
-        else
-            ;
+            mem[w_addr] <= data_in;
     end
 
 endmodule

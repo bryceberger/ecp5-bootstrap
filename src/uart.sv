@@ -94,15 +94,18 @@ module uart
         );
 
     // ~ 1 second timeout
-    localparam int TIMEOUT_MAX = 2 ** 20 - 1;
+    // localparam int TIMEOUT_MAX = 2 ** 20;
+    // ~ 0.13 second timeout
+    localparam int TIMEOUT_MAX = 2 ** 17;
     localparam int TIMEOUT_BITS = $clog2(TIMEOUT_MAX);
+    logic timeout_en, timeout_clear, timeout_rollover;
     counter
         #(.NUM_BITS(TIMEOUT_BITS)
         ) timeout_counter
-        ( .en(1)
-        , .clear(0)
+        ( .en(timeout_en)
+        , .clear(timeout_clear)
         , .rollover_val(TIMEOUT_MAX[TIMEOUT_BITS-1:0])
-        , .rollover_flag(timeout)
+        , .rollover_flag(timeout_rollover)
         , .count()
         , .*
         );
@@ -117,6 +120,10 @@ module uart
         } state_t;
     state_t state, state_n;
 
+    assign timeout_en = state != RESET;
+    assign timeout_clear = state != NONE;
+    assign timeout = state == TIMEOUT;
+
     always_ff @(posedge clk, negedge n_rst)
         if (!n_rst) state <= RESET;
         else state <= state_n;
@@ -129,7 +136,7 @@ module uart
 
             NONE:
             if (rx_edge) state_n = RECIEVE;
-            else if (timeout) state_n = TIMEOUT;
+            else if (timeout_rollover) state_n = TIMEOUT;
             else state_n = NONE;
 
             RECIEVE:

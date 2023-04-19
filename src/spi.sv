@@ -152,6 +152,7 @@ module spi
             CHECK_WRITE_DONE: state_n = WAIT_WRITE_DONE;
             WAIT_WRITE_DONE:
             if (status_write_done) state_n = NONE;
+            /* if (status_write_done) state_n = SEND_READ; */
             else state_n = CHECK_WRITE_DONE;
 
             SEND_READ: state_n = READ;

@@ -1,7 +1,7 @@
 # tb_source := tb.cpp
 sim_source := $(shell find src -name '*.sv')
 fpga_source := $(shell find fpga -name '*.sv')
-v_source = $(shell find -name '*.v')
+sv_source = $(shell find build -name '*.sv')
 
 include_dir := include
 include_source := $(shell find $(include_dir) -name '*.vh')
@@ -30,15 +30,23 @@ build/build.svf build/build.config: build/build.json $(pinmap)
 		--json build/build.json --textcfg build/build.config \
 		--lpf fpga/pinmap.lpf --lpf-allow-unconstrained
 
-build/build.json: $(fpga_source) $(hex) build/v
+build/build.json: $(fpga_source) $(hex) build/sv
 	# @cp -u $(hex) build/verilog
-	@yosys -p "synth_ecp5 -top top -json build/build.json" $(v_source) $(fpga_source)
+	@yosys -p "synth_ecp5 -top top -json build/build.json" $(sv_source) $(fpga_source)
+
+# stupid yosys doesn't let you do '.*' in files that end with '.v'
+# can't figure out how to force it to use systemverilog frontend
+# so, just make all converted sv->v files have sv endings
+build/sv: build/v
+	@$(foreach ver,$(shell find build -name '*.v'), mv $(ver) $(ver:%.v=%.sv);)
+	@touch build/sv
 
 build/v: $(sim_source) $(include_source)
 	@mkdir -p build/verilog
 	@sv2v --siloed -w adjacent -I$(include_dir) $(sim_source)
-	@mv $(patsubst %.sv,%.v,$(sim_source)) build/verilog
+	@mv $(sim_source:%.sv=%.v) build/verilog
 	@touch build/v
+
 
 %.sim: obj_dir/%.vcd
 	@if ps -C "gtkwave" > /dev/null; \

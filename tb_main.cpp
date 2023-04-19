@@ -89,12 +89,17 @@ int main(int argc, char** argv, char** env) {
 
     reset(dut, m_trace);
 
-    for (auto i = 0; i < 4096; i++) {
+    // don't want to timeout before doing anything
+    for (int i = 0; i < 10000; i++) {
+        step(dut, m_trace);
+    }
+
+    for (auto i = 0; i < 512 + 100; i++) {
         send_packet(dut, m_trace, rand());
     }
 
-    for (int i = 0; i < 30; i++) {
-        step_fast(dut, m_trace);
+    for (int i = 0; i < 300; i++) {
+        step(dut, m_trace);
     }
 
     m_trace->close();

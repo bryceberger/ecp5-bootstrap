@@ -57,16 +57,28 @@ module main
         , .*
         );
 
+    logic last_written = 0;
+
     always_comb
-        if (uart_timeout)
+        if (uart_timeout && last_written)
             spi_cmd_n = spi_pkg::END;
-        else if (uart_buffer_full)
+        else if (uart_buffer_full || uart_timeout) 
             spi_cmd_n = spi_pkg::WRITE;
         else
             spi_cmd_n = spi_pkg::NONE;
 
-    always_ff @(posedge clk)
-        if (uart_buffer_full)
+    always_ff @(posedge clk, negedge n_rst)
+        if (!n_rst)
+            last_written <= 0;
+        else if (uart_timeout && spi_done)
+            last_written <= 1;
+        else
+            last_written <= last_written;
+
+    always_ff @(posedge clk, negedge n_rst)
+        if (!n_rst)
+            spi_addr_write <= 0 - BLOCK_SIZE[23:0];
+        else if (uart_buffer_full)
             spi_addr_write <= spi_addr_write + BLOCK_SIZE[23:0];
         else
             spi_addr_write <= spi_addr_write;
