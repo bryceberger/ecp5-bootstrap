@@ -31,7 +31,7 @@ flash: setup_tty $(FLASH_TARGET)
 	cat $(FLASH_TARGET) > /dev/ttyUSB0
 
 setup_tty:
-	stty -F $(tty) 115200 -parenb
+	stty -F $(tty) 406:0:18b2:8a30:3:1c:7f:15:4:2:64:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0
 
 cram: build/build.bit
 	@openFPGALoader -c jlink-plus build/build.bit
@@ -55,9 +55,7 @@ build/build.config: build/build.json $(pinmap)
 
 build/build.json: $(fpga_source) $(hex) build/sv
 	@$(if $(hex),cp -u $(hex) build/verilog,)
-	@yosys -p "synth_ecp5 -top top -json build/build-orig.json" $(sv_source) $(fpga_source)
-	@jq --compact-output < build/build-orig.json > build/build.json
-	@rm build/build-orig.json
+	@yosys -p "synth_ecp5 -top top -json build/build.json" $(sv_source) $(fpga_source)
 
 # stupid yosys doesn't let you do '.*' in files that end with '.v'
 # can't figure out how to force it to use systemverilog frontend
