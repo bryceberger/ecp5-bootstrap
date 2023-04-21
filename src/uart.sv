@@ -3,11 +3,6 @@
 module uart
     #(int NUM_PACKETS = 256
     )
-    // expect 1 MHz clk
-    // 115.600 KHz data
-    // => 9 clocks / data, resync on change
-    // worst case has to change after ~86.5 us (9.6 samples / 10 bits)
-    // so we shouldn't lose bits
     ( input  var clk
     , input  var n_rst
     // uart
@@ -19,10 +14,7 @@ module uart
     , output var [$clog2(NUM_PACKETS)-1:0] packet_count
     , output var buffer_finish
     , output var timeout
-    // just for testbench clarity
     );
-
-    assign tx = 1;
 
     logic [1:0] rx_sync;
     always_ff @(posedge clk)
@@ -30,15 +22,16 @@ module uart
 
     wire rx_s = rx_sync[1];
     wire rx_edge = rx_sync[1] != rx_sync[0];
+    wire rx_edge_fell = rx_sync[1] && !rx_sync[0];
 
-    localparam int CLKS_PER_BIT = 9;
+    localparam int CLKS_PER_BIT = 35;
     localparam int SYNC_BITS = $clog2(CLKS_PER_BIT);
     logic sync_clear, sync_rollover;
     logic [SYNC_BITS-1:0] sync_count;
     counter
         #(.NUM_BITS(SYNC_BITS)
         ) sync_counter
-        ( .en(1)
+        ( .en(1'b1)
         , .clear(rx_edge)
         , .rollover_val(CLKS_PER_BIT[SYNC_BITS-1:0])
         , .rollover_flag(sync_rollover)
@@ -47,12 +40,12 @@ module uart
         );
 
     // verilator lint_off WIDTHTRUNC
-    localparam bit [SYNC_BITS-1:0] SYNC_HALF = CLKS_PER_BIT / 2;
+    localparam bit [SYNC_BITS-1:0] SYNC_HALF = CLKS_PER_BIT / 4;
     // verilator lint_on WIDTHTRUNC
     wire could_read_bit = sync_count == SYNC_HALF;
     logic read_bit;
 
-    localparam int BITS_PER_PACKET = 11;
+    localparam int BITS_PER_PACKET = 10;
     localparam int BIT_BITS = $clog2(BITS_PER_PACKET + 2);
     logic bit_rollover, bit_clear, bit_en;
     logic [BIT_BITS-1:0] bit_count;
@@ -79,6 +72,8 @@ module uart
         else
             packet <= packet;
 
+    assign tx = 1;
+
     localparam int PACKET_BITS = $clog2(NUM_PACKETS);
     logic packet_done, packet_rollover;
     counter
@@ -86,7 +81,7 @@ module uart
         , .ROLLOVER_CORR(1)
         ) packet_counter
         ( .en(packet_en)
-        , .clear(0)
+        , .clear(1'b0)
         , .rollover_val(NUM_PACKETS[PACKET_BITS-1:0])
         , .rollover_flag(packet_rollover)
         , .count(packet_count)
@@ -131,7 +126,7 @@ module uart
     always_comb
         case (state)
             RESET:
-            if (rx_edge) state_n = RECIEVE;
+            if (rx_edge_fell) state_n = RECIEVE;
             else state_n = RESET;
 
             NONE:

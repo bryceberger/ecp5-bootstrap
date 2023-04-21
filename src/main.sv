@@ -93,20 +93,39 @@ module main
             uart_buffer <= uart_buffer;
 
 
-    logic [BLOCK_BITS-1:0] ram_out[2];
+    logic [7:0] ram_out[2];
     assign spi_data_read = ram_out[~uart_buffer];
+    logic [BLOCK_BITS-1:0] ram_addr[2];
+    always_comb
+        case (uart_buffer)
+            0: begin
+                ram_addr[0] = uart_addr;
+                ram_addr[1] = spi_addr_read;
+            end
+            default: begin
+                ram_addr[0] = spi_addr_read;
+                ram_addr[1] = uart_addr;
+            end
+        endcase
+
     ram
         #(.ADDR_SIZE(BLOCK_BITS)
         , .DATA_SIZE(8)
-        ) ram [1:0]
-        ( .w_addr(uart_addr[BLOCK_BITS-1:0])
-        , .wren(
-            { uart_buffer == 0 && uart_wren
-            , uart_buffer == 1 && uart_wren
-            })
+        ) ram0
+        ( .addr(ram_addr[0])
+        , .wren(uart_buffer == 0 && uart_wren)
         , .data_in(uart_data)
-        , .r_addr(spi_addr_read[BLOCK_BITS-1:0])
-        , .data_out(ram_out)
+        , .data_out(ram_out[0])
+        , .*
+        );
+    ram
+        #(.ADDR_SIZE(BLOCK_BITS)
+        , .DATA_SIZE(8)
+        ) ram1
+        ( .addr(ram_addr[1])
+        , .wren(uart_buffer == 1 && uart_wren)
+        , .data_in(uart_data)
+        , .data_out(ram_out[1])
         , .*
         );
 endmodule

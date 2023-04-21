@@ -8,3 +8,12 @@ LOCATE COMP "f_miso" SITE "T7";
 
 LOCATE COMP "rx" SITE "R6";
 LOCATE COMP "tx" SITE "R7";
+
+LOCATE COMP "bus_out[0]" SITE "B1";
+LOCATE COMP "bus_out[1]" SITE "C4";
+LOCATE COMP "bus_out[2]" SITE "D3";
+LOCATE COMP "bus_out[3]" SITE "E3";
+LOCATE COMP "bus_out[4]" SITE "C1";
+LOCATE COMP "bus_out[5]" SITE "G4";
+LOCATE COMP "bus_out[6]" SITE "G3";
+LOCATE COMP "bus_out[7]" SITE "H3";

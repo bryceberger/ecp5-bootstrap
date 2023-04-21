@@ -8,7 +8,8 @@ module top
     // uart
     , input  var rx
     , output var tx
-    , output var f_done
+    // debug
+    , output var [7:0] bus_out
     );
 
     // 155 MHz
@@ -36,7 +37,7 @@ module top
         #(.CLKI_DIV(1)
         , .CLKOP_DIV(1)
         , .CLKOS_DIV(4)
-        , .CLKOS2_DIV(52)
+        , .CLKOS2_DIV(26)
         ) pll
         ( .CLKI(filt_clk)
         , .ENCLKOP(1'b1), .CLKOP(pll_clk), .CLKFB(pll_clk)

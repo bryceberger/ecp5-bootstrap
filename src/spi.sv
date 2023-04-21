@@ -44,7 +44,7 @@ module spi
     ) counter
     ( .clk(~clk)
     , .en(count_en)
-    , .clear(0)
+    , .clear(1'b0)
     , .*
     );
 
