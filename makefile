@@ -1,4 +1,5 @@
-# tb_source := tb.cpp
+tty := /dev/ttyUSB0
+
 sim_source := $(shell find src -name '*.sv')
 fpga_source := $(shell find fpga -name '*.sv')
 sv_source = $(shell find build -name '*.sv')
@@ -15,16 +16,30 @@ WAVE = gtkwave --dark
 BASE_SIM := $(MAKECMDGOALS:%.sim=%)
 BASE_DOT := $(MAKECMDGOALS:%.dot=%)
 
-.PHONY: clean clean_sim clean_cram clean_dot %.sim cram
+.PHONY: clean clean_sim clean_cram clean_dot %.sim cram flash setup_tty
 .PRECIOUS: obj_dir/V% obj_dir/%.vcd
+
+default: cram
+
+# https://stackoverflow.com/questions/2214575/passing-arguments-to-make-run
+ifeq (flash,$(firstword $(MAKECMDGOALS)))
+  FLASH_TARGET := $(word 2,$(MAKECMDGOALS))
+  $(eval $(FLASH_TARGET):;@:)
+endif
+
+flash: setup_tty $(FLASH_TARGET)
+	cat $(FLASH_TARGET) > /dev/ttyUSB0
+
+setup_tty:
+	stty -F $(tty) 115200 -parenb
 
 cram: build/build.bit
 	@openFPGALoader -c jlink-plus build/build.bit
 
-build/build.bit: build/build.svf build/build.config
-	@ecppack --svf build/build.svf build/build.config build/build.bit
+build/build.bit: build/build.config
+	@ecppack build/build.config build/build.bit
 
-build/build.svf build/build.config: build/build.json $(pinmap)
+build/build.config: build/build.json $(pinmap)
 	@nextpnr-ecp5 \
 		--12k --package CABGA256 \
 		--speed 6 --freq 5 \
@@ -40,7 +55,9 @@ build/build.svf build/build.config: build/build.json $(pinmap)
 
 build/build.json: $(fpga_source) $(hex) build/sv
 	@$(if $(hex),cp -u $(hex) build/verilog,)
-	@yosys -p "synth_ecp5 -top top -json build/build.json" $(sv_source) $(fpga_source)
+	@yosys -p "synth_ecp5 -top top -json build/build-orig.json" $(sv_source) $(fpga_source)
+	@jq --compact-output < build/build-orig.json > build/build.json
+	@rm build/build-orig.json
 
 # stupid yosys doesn't let you do '.*' in files that end with '.v'
 # can't figure out how to force it to use systemverilog frontend
