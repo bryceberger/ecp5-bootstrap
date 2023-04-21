@@ -15,6 +15,8 @@ module main
     // uart
     , input  var rx
     , output var tx
+    // debug
+    , output var [7:0] bus_out
     );
 
     localparam int BLOCK_SIZE = (8 * 256) / 8;
@@ -75,19 +77,27 @@ module main
         else
             last_written <= last_written;
 
+    assign bus_out[0] = uart_timeout;
+    assign bus_out[1] = spi_done;
+    assign bus_out[2] = last_written;
+
     always_ff @(posedge clk, negedge n_rst)
         if (!n_rst)
             spi_addr_write <= 0 - BLOCK_SIZE[23:0];
-        else if (uart_buffer_full)
+        else if (uart_buffer_full || (uart_timeout && !uart_timeout_reg))
             spi_addr_write <= spi_addr_write + BLOCK_SIZE[23:0];
         else
             spi_addr_write <= spi_addr_write;
+
+    logic uart_timeout_reg;
+    always_ff @(posedge clk)
+        uart_timeout_reg <= uart_timeout;
 
     logic uart_buffer;
     always_ff @(posedge clk, negedge n_rst)
         if (!n_rst)
             uart_buffer <= 0;
-        else if (uart_buffer_full)
+        else if (uart_buffer_full || (uart_timeout && !uart_timeout_reg))
             uart_buffer <= ~uart_buffer;
         else
             uart_buffer <= uart_buffer;
